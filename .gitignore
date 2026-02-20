@@ -1,0 +1,29 @@
+# Binaries
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+
+# Build output
+build/bin/
+dist/
+*.syso
+
+# Coverage
+coverage.*
+cover.out
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.tmp

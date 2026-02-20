@@ -1,0 +1,17 @@
+# day1.yml — All settings for the onboarding wizard.
+# Place this file alongside your .md pages.
+brand:
+  name: Example Company
+  logo: assets/brand-logo.png # relative to this directory
+title: Welcome
+help_url: https://wiki.example.com/onboarding
+theme: auto # auto, light, or dark
+accent_color: "#188038" # hex color for buttons and progress bar
+# final_page: final.md # custom final page (relative to this directory)
+pages: # display order; only listed pages are shown
+  - welcome.md
+  - getting-started.md
+  - tools-access.md
+  - security.md
+  - culture.md
+  - resources.md
