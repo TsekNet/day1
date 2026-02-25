@@ -1,5 +1,9 @@
 # Architecture
 
+**[← Wiki Home](Home)** · [Design](Design) · [Deployment](Deployment)
+
+---
+
 ## Startup Flow
 
 ```mermaid
@@ -16,6 +20,8 @@ flowchart TD
     WailsRun --> ShowWindow["Center + show window"]
 ```
 
+---
+
 ## Package Dependency Graph
 
 ```mermaid
@@ -29,6 +35,8 @@ flowchart LR
     main --> logging["internal/logging"]
     cmd --> version["internal/version"]
 ```
+
+---
 
 ## Page Lifecycle
 
@@ -44,6 +52,8 @@ flowchart LR
     Cache --> Binding["GetPageHTML(i)\nWails binding"]
     Binding --> InnerHTML["Frontend\ninnerHTML"]
 ```
+
+---
 
 ## Frontend State Machine
 
@@ -61,6 +71,8 @@ stateDiagram-v2
     Dismissed --> [*]: Quit (no sentinel)
 ```
 
+---
+
 ## Build and Release Pipeline
 
 ```mermaid
@@ -70,6 +82,8 @@ flowchart LR
     WailsBuild --> Artifacts["Upload\nplatform binaries"]
     Artifacts --> Release["GitHub Release\n+ checksums"]
 ```
+
+---
 
 ## Key Files
 

@@ -1,6 +1,10 @@
 # Design
 
+**[← Wiki Home](Home)** · [Architecture](Architecture) · [Deployment](Deployment)
+
 Design decisions and rationale for the day1 onboarding wizard.
+
+---
 
 ## Principles
 
@@ -10,6 +14,8 @@ Design decisions and rationale for the day1 onboarding wizard.
 4. **Config-driven.** All content settings live in `day1.yml` alongside the pages. The CLI has only three flags: `--pages-dir`, `--force`, `--verbose`.
 5. **System theme.** Light and dark themes are handled via CSS `prefers-color-scheme`, overridable in `day1.yml` with `theme: dark` or `theme: light`. On WSL, the app reads the Windows registry (`AppsUseLightTheme`) to detect dark mode since WebKit2GTK can't see the Windows theme.
 6. **Embedded defaults.** Demo pages are baked into the binary via `//go:embed`. When `--pages-dir` is not set, the built-in pages are extracted to a temp dir and used automatically.
+
+---
 
 ## Frontend Spec
 
@@ -64,6 +70,8 @@ The footer contains branding, help link, page indicator, and navigation buttons:
 
 Built-in "You're all set!" screen with animated green checkmark circle. Overridable via `final_page` in `day1.yml` pointing to a custom markdown file.
 
+---
+
 ## day1.yml
 
 All settings live in `day1.yml` inside the pages directory:
@@ -99,6 +107,8 @@ pages: # display order; only listed pages are shown
 
 When `pages` is set, only listed files are loaded in that order. When omitted, all `.md` files are auto-discovered and sorted by frontmatter `order` field, then filename.
 
+---
+
 ## Markdown Page Format
 
 Each `.md` file has optional YAML frontmatter:
@@ -121,6 +131,8 @@ Since pages don't scroll, content must fit in ~400px of vertical space. Guidelin
 - Use blockquotes for callouts/tips
 - Use `<span class="wave">👋</span>` for animated waving hand
 
+---
+
 ## Run-Once Sentinel
 
 - **Path:** `os.UserConfigDir()/day1/.completed` (`%AppData%\day1` on Windows, `~/Library/Application Support/day1` on macOS, `~/.config/day1` on Linux)
@@ -128,6 +140,8 @@ Since pages don't scroll, content must fit in ~400px of vertical space. Guidelin
 - **Check on start:** If sentinel exists and `--force` not set, exit 0 silently
 - **Write on complete:** After user clicks Close on the final page
 - **Dismiss (Esc):** Does NOT write sentinel -- wizard shows again next time
+
+---
 
 ## Testing Strategy
 
@@ -141,6 +155,8 @@ All tests are table-driven with `t.Parallel()` where safe.
 | `cmd` | Flag defaults, removed flags verification, version output, invalid pages-dir | -- |
 
 **Coverage target:** >75% on `./internal/...`
+
+---
 
 ## Patterns Provenance
 
@@ -158,6 +174,8 @@ All tests are table-driven with `t.Parallel()` where safe.
 | CI: vet + test + codecov | hermes |
 | Release: matrix wails build | hermes |
 
+---
+
 ## Build
 
 | Platform | Build tags | Notes |
@@ -165,6 +183,8 @@ All tests are table-driven with `t.Parallel()` where safe.
 | Windows | `desktop,production` | Cross-compilable from Linux (`GOOS=windows`) |
 | Linux | `webkit2_41` | Requires `libgtk-3-dev`, `libwebkit2gtk-4.1-dev` |
 | macOS | `desktop,production` | Must build ON macOS (CGO requires Xcode/SDK) |
+
+---
 
 ## V2 Wishlist
 

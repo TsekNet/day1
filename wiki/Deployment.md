@@ -1,10 +1,12 @@
 # Deployment
 
+**[← Wiki Home](Home)** · [Design](Design) · [Architecture](Architecture)
+
 How to make `day1` run automatically on first login across platforms.
 
-The app itself handles the "show once" logic via a sentinel file. Your job is
-to set up a trigger that launches `day1` at login. The app exits silently
-if the sentinel already exists.
+The app itself handles the "show once" logic via a sentinel file. Your job is to set up a trigger that launches `day1` at login. The app exits silently if the sentinel already exists.
+
+---
 
 ## Windows
 
@@ -36,6 +38,8 @@ Register-ScheduledTask -TaskName "Day1Onboarding" `
     -Description "First-run onboarding wizard" -RunLevel Limited
 ```
 
+---
+
 ## macOS
 
 ### LaunchAgent
@@ -66,6 +70,8 @@ Create a plist in `/Library/LaunchAgents/` (system-wide) or `~/Library/LaunchAge
 ```
 
 Deploy via MDM or Fleet configuration profile.
+
+---
 
 ## Linux
 
