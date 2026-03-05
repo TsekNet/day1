@@ -81,7 +81,7 @@ func TestURISchemeAllowed(t *testing.T) {
 	for url, want := range map[string]bool{
 		"https://example.com":          true,
 		"http://intranet/kb":           true,
-		"ms-settings:windowsupdate":    urischeme.AllowedOn("ms-settings:windowsupdate", "windows"),
+		"ms-settings:windowsupdate":    false,
 		"ftp://evil.com":               false,
 		"file:///etc/passwd":           false,
 		"javascript:alert(1)":          false,
