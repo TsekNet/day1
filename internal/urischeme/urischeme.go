@@ -35,6 +35,32 @@ var registry = []Scheme{
 	{Prefix: "x-apple.systempreferences:", Kind: KindSettings, Platform: "darwin", Example: "x-apple.systempreferences:com.apple.preference.security"},
 }
 
+// findScheme returns the first registry entry matching rawURL on goos, or nil.
+func findScheme(rawURL, goos string) *Scheme {
+	lower := strings.ToLower(rawURL)
+	for i := range registry {
+		s := &registry[i]
+		if !strings.HasPrefix(lower, s.Prefix) {
+			continue
+		}
+		if s.Platform != "" && s.Platform != goos {
+			return nil
+		}
+		return s
+	}
+	return nil
+}
+
+// HasControlChars reports whether s contains ASCII control characters.
+func HasControlChars(s string) bool {
+	for i := 0; i < len(s); i++ {
+		if s[i] <= 0x1f || s[i] == 0x7f {
+			return true
+		}
+	}
+	return false
+}
+
 // Allowed reports whether rawURL is permitted on the current OS.
 func Allowed(rawURL string) bool {
 	return AllowedOn(rawURL, runtime.GOOS)
@@ -43,18 +69,21 @@ func Allowed(rawURL string) bool {
 // AllowedOn reports whether rawURL is permitted on the given OS.
 // Exported for testing without build tags.
 func AllowedOn(rawURL, goos string) bool {
-	lower := strings.ToLower(rawURL)
-	for _, s := range registry {
-		if !strings.HasPrefix(lower, s.Prefix) {
-			continue
-		}
-		if s.Platform != "" && s.Platform != goos {
-			return false
-		}
-		_, err := url.Parse(rawURL)
-		return err == nil
+	if HasControlChars(rawURL) {
+		return false
 	}
-	return false
+	s := findScheme(rawURL, goos)
+	if s == nil {
+		return false
+	}
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return false
+	}
+	if s.Kind == KindWeb && u.Host == "" {
+		return false
+	}
+	return true
 }
 
 // Classify returns the Kind of a URI on the current OS, or KindUnknown.
@@ -64,23 +93,28 @@ func Classify(rawURL string) Kind {
 
 // ClassifyOn returns the Kind of a URI on the given OS.
 func ClassifyOn(rawURL, goos string) Kind {
-	lower := strings.ToLower(rawURL)
-	for _, s := range registry {
-		if strings.HasPrefix(lower, s.Prefix) {
-			if s.Platform != "" && s.Platform != goos {
-				return KindUnknown
-			}
-			return s.Kind
-		}
+	if s := findScheme(rawURL, goos); s != nil {
+		return s.Kind
 	}
 	return KindUnknown
+}
+
+// schemesForPlatform returns all registry entries available on goos.
+func schemesForPlatform(goos string) []Scheme {
+	var out []Scheme
+	for _, s := range registry {
+		if s.Platform == "" || s.Platform == goos {
+			out = append(out, s)
+		}
+	}
+	return out
 }
 
 // SettingsSchemes returns the settings URI schemes available on the given OS.
 func SettingsSchemes(goos string) []Scheme {
 	var out []Scheme
-	for _, s := range registry {
-		if s.Kind == KindSettings && (s.Platform == "" || s.Platform == goos) {
+	for _, s := range schemesForPlatform(goos) {
+		if s.Kind == KindSettings {
 			out = append(out, s)
 		}
 	}
@@ -89,11 +123,5 @@ func SettingsSchemes(goos string) []Scheme {
 
 // AllSchemes returns every registered scheme available on the given OS.
 func AllSchemes(goos string) []Scheme {
-	var out []Scheme
-	for _, s := range registry {
-		if s.Platform == "" || s.Platform == goos {
-			out = append(out, s)
-		}
-	}
-	return out
+	return schemesForPlatform(goos)
 }

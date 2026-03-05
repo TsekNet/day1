@@ -34,6 +34,11 @@ func TestAllowedOn(t *testing.T) {
 		{"case insensitive https", "HTTPS://EXAMPLE.COM", "linux", true},
 		{"case insensitive ms-settings", "MS-SETTINGS:windowsupdate", "windows", true},
 		{"case insensitive apple prefs", "X-Apple.SystemPreferences:com.apple.preference.security", "darwin", true},
+
+		{"opaque https no host", "https:opaque", "linux", false},
+		{"http no host", "http:", "linux", false},
+		{"control char in url", "https://example.com/\x00evil", "linux", false},
+		{"newline in url", "https://example.com/\ninjection", "linux", false},
 	}
 
 	for _, tt := range tests {

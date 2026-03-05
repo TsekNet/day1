@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -109,13 +110,13 @@ func (a *App) GetTheme() string {
 	if a.cfg.Theme != "auto" {
 		return a.cfg.Theme
 	}
-	if runtime.GOOS == "linux" && isWSL() {
-		if wslDarkMode() {
-			return "dark"
-		}
-		return "light"
+	if runtime.GOOS != "linux" || !isWSL() {
+		return "auto"
 	}
-	return "auto"
+	if wslDarkMode() {
+		return "dark"
+	}
+	return "light"
 }
 
 func (a *App) Ready() {
@@ -146,7 +147,11 @@ func (a *App) OpenHelp() {
 
 func (a *App) OpenURL(rawURL string) {
 	if !urischeme.Allowed(rawURL) {
-		deck.Warningf("blocked URL: %s", rawURL)
+		truncated := rawURL
+		if len(truncated) > 100 {
+			truncated = truncated[:100] + "..."
+		}
+		deck.Warningf("blocked URL: %s", truncated)
 		return
 	}
 	if err := openBrowser(a.ctx, rawURL); err != nil {
@@ -164,7 +169,16 @@ func (a *App) GetCheckState() map[string]bool {
 	return out
 }
 
+// Keys are positional ("pageIndex:checkIndex"). Reordering or inserting
+// checkboxes in markdown shifts existing mappings. Acceptable for onboarding
+// content that rarely changes after deployment.
+var validCheckKey = regexp.MustCompile(`^\d+:\d+$`)
+
 func (a *App) ToggleCheckItem(key string) bool {
+	if !validCheckKey.MatchString(key) {
+		deck.Warningf("invalid check key: %q", key)
+		return false
+	}
 	a.checkMu.Lock()
 	defer a.checkMu.Unlock()
 	a.checkState[key] = !a.checkState[key]
@@ -239,7 +253,8 @@ func saveCheckState(state map[string]bool) {
 	if p == "" {
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+	dir := filepath.Dir(p)
+	if err := os.MkdirAll(dir, 0o755); err != nil {
 		deck.Errorf("mkdir for checklist: %v", err)
 		return
 	}
@@ -248,7 +263,12 @@ func saveCheckState(state map[string]bool) {
 		deck.Errorf("marshal checklist: %v", err)
 		return
 	}
-	if err := os.WriteFile(p, data, 0o644); err != nil {
-		deck.Errorf("write checklist: %v", err)
+	tmp := p + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+		deck.Errorf("write checklist tmp: %v", err)
+		return
+	}
+	if err := os.Rename(tmp, p); err != nil {
+		deck.Errorf("rename checklist: %v", err)
 	}
 }

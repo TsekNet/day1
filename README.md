@@ -66,6 +66,26 @@ platform: all
 Your onboarding content here.
 ```
 
+### Interactive checklists
+
+Use standard markdown checkboxes. State persists across restarts:
+
+```markdown
+- [ ] **Sign in to email** — [Open Outlook](https://outlook.office.com)
+- [ ] **Set up MFA** — [Microsoft Authenticator setup](https://aka.ms/mfasetup)
+```
+
+Links inside checklist items become action pills that open via the system browser. Supported URI schemes:
+
+| Scheme | Platform | Example |
+|--------|----------|---------|
+| `https:` | all | `https://example.com` |
+| `http:` | all | `http://intranet.corp/kb` |
+| `ms-settings:` | Windows | `ms-settings:windowsupdate` |
+| `x-apple.systempreferences:` | macOS | `x-apple.systempreferences:com.apple.preference.security` |
+
+> **Note:** Checklist keys are position-based (`pageIndex:checkIndex`). Reordering or inserting checkboxes shifts saved state.
+
 > **Design rule:** Pages do not scroll. Content must fit in one screen.
 
 ## CLI

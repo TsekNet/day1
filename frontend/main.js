@@ -18,15 +18,12 @@
   }
 
   function applyTheme(theme) {
-    if (theme === "dark") {
+    if (theme === "dark" || theme === "light") {
+      document.documentElement.setAttribute("data-theme", theme);
+      return;
+    }
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
       document.documentElement.setAttribute("data-theme", "dark");
-    } else if (theme === "light") {
-      document.documentElement.setAttribute("data-theme", "light");
-    } else {
-      // "auto" — check matchMedia, fall through to CSS media query if supported
-      if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        document.documentElement.setAttribute("data-theme", "dark");
-      }
     }
   }
 
@@ -179,23 +176,25 @@
     var checkCount = 0;
 
     for (var i = 0; i < items.length; i++) {
-      var cb = items[i].querySelector(CHECKBOX_SEL);
-      if (!cb) continue;
+      var li = items[i];
+      var cb = li.querySelector(CHECKBOX_SEL);
+      if (!cb || cb.closest("li") !== li) continue;
 
       var key = pageIndex + ":" + checkCount;
       checkCount++;
 
+      var checked = !!checkState[key];
       cb.disabled = false;
-      cb.checked = !!checkState[key];
-      items[i].classList.add("check-item");
-      items[i].classList.toggle("checked", !!checkState[key]);
+      cb.checked = checked;
+      li.classList.add("check-item");
+      li.classList.toggle("checked", checked);
 
       var wrap = document.createElement("span");
       wrap.className = "check-item-text";
       while (cb.nextSibling) {
         wrap.appendChild(cb.nextSibling);
       }
-      items[i].appendChild(wrap);
+      li.appendChild(wrap);
 
       var links = wrap.querySelectorAll("a");
       var hrefs = [];
@@ -215,7 +214,7 @@
             e.stopPropagation();
             Backend.OpenURL(info.href);
           });
-          items[i].appendChild(pill);
+          li.appendChild(pill);
         })(hrefs[j]);
       }
 
@@ -228,7 +227,7 @@
             updateCheckProgress(container, pageIndex);
           });
         });
-      })(items[i], cb, key);
+      })(li, cb, key);
     }
 
     if (checkCount > 0) {
