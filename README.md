@@ -84,7 +84,11 @@ Subcommands:
 
 ## Documentation
 
-**[📚 Wiki](https://github.com/TsekNet/day1/wiki)** — Design, Architecture, Deployment. Wiki source lives in `wiki/` in this repo.
+| Doc | Description |
+|-----|-------------|
+| [Design](docs/design.md) | Frontend spec, markdown format, testing strategy |
+| [Architecture](docs/architecture.md) | Mermaid diagrams, package map, data flow |
+| [Deployment](docs/deployment.md) | Run-once triggers per OS (Windows, macOS, Linux) |
 
 ## Contributing
 

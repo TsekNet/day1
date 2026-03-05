@@ -1,7 +1,5 @@
 # Design
 
-**[← Wiki Home](Home)** · [Architecture](Architecture) · [Deployment](Deployment)
-
 Design decisions and rationale for the day1 onboarding wizard.
 
 ---

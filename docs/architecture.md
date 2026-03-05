@@ -1,9 +1,5 @@
 # Architecture
 
-**[← Wiki Home](Home)** · [Design](Design) · [Deployment](Deployment)
-
----
-
 ## Startup Flow
 
 ```mermaid

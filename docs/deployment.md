@@ -1,7 +1,5 @@
 # Deployment
 
-**[← Wiki Home](Home)** · [Design](Design) · [Architecture](Architecture)
-
 How to make `day1` run automatically on first login across platforms.
 
 The app itself handles the "show once" logic via a sentinel file. Your job is to set up a trigger that launches `day1` at login. The app exits silently if the sentinel already exists.
