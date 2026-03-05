@@ -6,10 +6,10 @@ title: Security
 
 Five rules that keep everyone safe:
 
-1. 🔑 **Passwords** — Use a password manager. Never reuse passwords.
-2. 🎣 **Phishing** — When in doubt, *don't click*. Report suspicious emails.
-3. 💾 **Data handling** — No sensitive data on personal devices. Ever.
-4. 🖥️ **Screen lock** — Lock your workstation when you step away.
-5. 🚨 **Incidents** — See something? Report it to security *immediately*.
+- **Passwords** — Set up [1Password](https://1password.com/downloads). Never reuse passwords.
+- **Phishing** — Complete the [KnowBe4 training](https://training.knowbe4.com). When in doubt, *don't click*.
+- **Data handling** — Review the [data classification policy](https://en.wikipedia.org/wiki/Information_security). No sensitive data on personal devices.
+- **Screen lock** — Enable auto-lock: [Windows Settings](ms-settings:lockscreen) or [macOS Settings](x-apple.systempreferences:com.apple.preference.security)
+- **Incidents** — Bookmark the [incident response portal](https://status.atlassian.com). Report issues *immediately*.
 
 > ⚠️ **This is not optional.** Security is everyone's responsibility.

@@ -2,15 +2,17 @@ package app
 
 import (
 	"context"
-	"net/url"
+	"encoding/json"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"sync"
 
 	"github.com/TsekNet/day1/internal/marker"
 	"github.com/TsekNet/day1/internal/pages"
+	"github.com/TsekNet/day1/internal/urischeme"
 	"github.com/google/deck"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -35,11 +37,13 @@ type Config struct {
 }
 
 type App struct {
-	ctx      context.Context
-	pages    []pages.Page
-	cfg      Config
-	brand    BrandInfo
-	rendered []string
+	ctx        context.Context
+	pages      []pages.Page
+	cfg        Config
+	brand      BrandInfo
+	rendered   []string
+	checkState map[string]bool
+	checkMu    sync.Mutex
 }
 
 func New(loaded []pages.Page, cfg Config) *App {
@@ -58,10 +62,11 @@ func New(loaded []pages.Page, cfg Config) *App {
 		logoURL = "/pages/" + cfg.BrandLogo
 	}
 	return &App{
-		pages:    loaded,
-		cfg:      cfg,
-		brand:    BrandInfo{Name: cfg.BrandName, Logo: logoURL},
-		rendered: rendered,
+		pages:      loaded,
+		cfg:        cfg,
+		brand:      BrandInfo{Name: cfg.BrandName, Logo: logoURL},
+		rendered:   rendered,
+		checkState: loadCheckState(),
 	}
 }
 
@@ -136,14 +141,35 @@ func (a *App) OpenHelp() {
 	if a.cfg.HelpURL == "" {
 		return
 	}
-	u, err := url.Parse(a.cfg.HelpURL)
-	if err != nil || !allowedSchemes[u.Scheme] {
-		deck.Warningf("blocked URL: %s", a.cfg.HelpURL)
+	a.OpenURL(a.cfg.HelpURL)
+}
+
+func (a *App) OpenURL(rawURL string) {
+	if !urischeme.Allowed(rawURL) {
+		deck.Warningf("blocked URL: %s", rawURL)
 		return
 	}
-	if err := openBrowser(a.ctx, a.cfg.HelpURL); err != nil {
+	if err := openBrowser(a.ctx, rawURL); err != nil {
 		deck.Errorf("open browser: %v", err)
 	}
+}
+
+func (a *App) GetCheckState() map[string]bool {
+	a.checkMu.Lock()
+	defer a.checkMu.Unlock()
+	out := make(map[string]bool, len(a.checkState))
+	for k, v := range a.checkState {
+		out[k] = v
+	}
+	return out
+}
+
+func (a *App) ToggleCheckItem(key string) bool {
+	a.checkMu.Lock()
+	defer a.checkMu.Unlock()
+	a.checkState[key] = !a.checkState[key]
+	saveCheckState(a.checkState)
+	return a.checkState[key]
 }
 
 // openBrowser uses rundll32 on WSL to avoid cmd.exe metacharacter injection.
@@ -181,4 +207,48 @@ func wslDarkMode() bool {
 	return strings.Contains(string(out), "0x0")
 }
 
-var allowedSchemes = map[string]bool{"http": true, "https": true, "ms-settings": true}
+const checklistFile = "checklist.json"
+
+func checklistPath() string {
+	dir, err := marker.Dir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(dir, checklistFile)
+}
+
+func loadCheckState() map[string]bool {
+	p := checklistPath()
+	if p == "" {
+		return map[string]bool{}
+	}
+	data, err := os.ReadFile(p)
+	if err != nil {
+		return map[string]bool{}
+	}
+	var state map[string]bool
+	if err := json.Unmarshal(data, &state); err != nil {
+		deck.Warningf("corrupt checklist state: %v", err)
+		return map[string]bool{}
+	}
+	return state
+}
+
+func saveCheckState(state map[string]bool) {
+	p := checklistPath()
+	if p == "" {
+		return
+	}
+	if err := os.MkdirAll(filepath.Dir(p), 0o755); err != nil {
+		deck.Errorf("mkdir for checklist: %v", err)
+		return
+	}
+	data, err := json.Marshal(state)
+	if err != nil {
+		deck.Errorf("marshal checklist: %v", err)
+		return
+	}
+	if err := os.WriteFile(p, data, 0o644); err != nil {
+		deck.Errorf("write checklist: %v", err)
+	}
+}

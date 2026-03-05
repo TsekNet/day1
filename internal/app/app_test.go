@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/TsekNet/day1/internal/pages"
+	"github.com/TsekNet/day1/internal/urischeme"
 )
 
 func testPages(n int) []pages.Page {
@@ -75,14 +76,20 @@ func TestGetHelpURL(t *testing.T) {
 	}
 }
 
-func TestAllowedSchemes(t *testing.T) {
+func TestURISchemeAllowed(t *testing.T) {
 	t.Parallel()
-	for scheme, want := range map[string]bool{
-		"http": true, "https": true, "ms-settings": true,
-		"ftp": false, "file": false, "javascript": false, "": false,
+	for url, want := range map[string]bool{
+		"https://example.com":          true,
+		"http://intranet/kb":           true,
+		"ms-settings:windowsupdate":    urischeme.AllowedOn("ms-settings:windowsupdate", "windows"),
+		"ftp://evil.com":               false,
+		"file:///etc/passwd":           false,
+		"javascript:alert(1)":          false,
+		"":                             false,
 	} {
-		if got := allowedSchemes[scheme]; got != want {
-			t.Errorf("allowedSchemes[%q] = %v, want %v", scheme, got, want)
+		if got := urischeme.AllowedOn(url, "linux"); got != want {
+			t.Errorf("AllowedOn(%q, linux) = %v, want %v", url, got, want)
 		}
 	}
 }
+

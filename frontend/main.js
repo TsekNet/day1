@@ -6,6 +6,8 @@
   var currentIndex = 0;
   var totalPages = 0;
   var onFinalPage = false;
+  var checkState = {};
+  var CHECKBOX_SEL = 'input[type="checkbox"]';
 
   function findApp() {
     if (!window.go) return null;
@@ -79,12 +81,15 @@
       }
     });
 
-    Backend.GetPages().then(function(pages) {
-      allPages = pages || [];
-      totalPages = allPages.length;
-      buildProgress();
-      showPage(0);
-      Backend.Ready();
+    Backend.GetCheckState().then(function(state) {
+      checkState = state || {};
+      Backend.GetPages().then(function(pages) {
+        allPages = pages || [];
+        totalPages = allPages.length;
+        buildProgress();
+        showPage(0);
+        Backend.Ready();
+      });
     });
   }
 
@@ -156,6 +161,7 @@
       var content = document.getElementById("content");
       content.className = "content";
       content.innerHTML = html;
+      enhanceChecklist(content, index);
 
       var indicator = document.getElementById("page-indicator");
       indicator.textContent = (index + 1) + " of " + totalPages;
@@ -166,6 +172,105 @@
 
       updateProgress();
     });
+  }
+
+  function enhanceChecklist(container, pageIndex) {
+    var items = container.querySelectorAll("li");
+    var checkCount = 0;
+
+    for (var i = 0; i < items.length; i++) {
+      var cb = items[i].querySelector(CHECKBOX_SEL);
+      if (!cb) continue;
+
+      var key = pageIndex + ":" + checkCount;
+      checkCount++;
+
+      cb.disabled = false;
+      cb.checked = !!checkState[key];
+      items[i].classList.add("check-item");
+      items[i].classList.toggle("checked", !!checkState[key]);
+
+      var wrap = document.createElement("span");
+      wrap.className = "check-item-text";
+      while (cb.nextSibling) {
+        wrap.appendChild(cb.nextSibling);
+      }
+      items[i].appendChild(wrap);
+
+      var links = wrap.querySelectorAll("a");
+      var hrefs = [];
+      for (var j = 0; j < links.length; j++) {
+        hrefs.push({ text: links[j].textContent, href: links[j].getAttribute("href") });
+        var plain = document.createTextNode(links[j].textContent);
+        links[j].parentNode.replaceChild(plain, links[j]);
+      }
+      for (var j = 0; j < hrefs.length; j++) {
+        (function(info) {
+          if (!info.href) return;
+          var pill = document.createElement("a");
+          pill.className = "action-link";
+          pill.textContent = info.text;
+          pill.addEventListener("click", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            Backend.OpenURL(info.href);
+          });
+          items[i].appendChild(pill);
+        })(hrefs[j]);
+      }
+
+      (function(item, checkbox, itemKey) {
+        checkbox.addEventListener("change", function(e) {
+          e.stopPropagation();
+          Backend.ToggleCheckItem(itemKey).then(function(checked) {
+            checkState[itemKey] = checked;
+            item.classList.toggle("checked", checked);
+            updateCheckProgress(container, pageIndex);
+          });
+        });
+      })(items[i], cb, key);
+    }
+
+    if (checkCount > 0) {
+      updateCheckProgress(container, pageIndex);
+    }
+  }
+
+  function updateCheckProgress(container, pageIndex) {
+    var items = container.querySelectorAll("li");
+    var total = 0, done = 0;
+    for (var i = 0; i < items.length; i++) {
+      if (!items[i].querySelector(CHECKBOX_SEL)) continue;
+      total++;
+      var key = pageIndex + ":" + (total - 1);
+      if (checkState[key]) done++;
+    }
+    if (total === 0) return;
+
+    var bar = container.querySelector(".check-progress");
+    if (!bar) {
+      bar = document.createElement("div");
+      bar.className = "check-progress";
+      var track = document.createElement("div");
+      track.className = "check-progress-track";
+      var fill = document.createElement("div");
+      fill.className = "check-progress-fill";
+      track.appendChild(fill);
+      bar.appendChild(track);
+      var label = document.createElement("span");
+      label.className = "check-progress-label";
+      bar.appendChild(label);
+      var lists = container.querySelectorAll("ul");
+      var lastList = lists[lists.length - 1];
+      if (lastList && lastList.parentNode) {
+        lastList.parentNode.insertBefore(bar, lastList.nextSibling);
+      } else {
+        container.appendChild(bar);
+      }
+    }
+    var pct = Math.round((done / total) * 100);
+    bar.querySelector(".check-progress-fill").style.width = pct + "%";
+    bar.querySelector(".check-progress-label").textContent = done + " of " + total;
   }
 
   function showFinalPage() {

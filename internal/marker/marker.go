@@ -14,12 +14,21 @@ const (
 	fileName = ".completed"
 )
 
-func path() (string, error) {
+// Dir returns the platform-appropriate config directory for day1 state files.
+func Dir() (string, error) {
 	base, err := os.UserConfigDir()
 	if err != nil {
 		return "", fmt.Errorf("user config dir: %w", err)
 	}
-	return filepath.Join(base, appDir, fileName), nil
+	return filepath.Join(base, appDir), nil
+}
+
+func path() (string, error) {
+	dir, err := Dir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(dir, fileName), nil
 }
 
 func Exists() (bool, error) {
